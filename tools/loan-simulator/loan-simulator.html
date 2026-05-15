@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free loan simulator. Calculate monthly payments, total interest and see the full amortization schedule for any loan or mortgage." />
+  <meta name="robots" content="index, follow" />
+  <title>Loan Simulator — NovaFinance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .ls-layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; }
+    .ls-field  { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .ls-table-wrap { max-height: 380px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); scrollbar-width: thin; }
+    .ls-table { width: 100%; border-collapse: collapse; }
+    .ls-table th { background: var(--bg3); padding: 10px 14px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dimmer); text-align: right; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+    .ls-table th:first-child { text-align: left; }
+    .ls-table td { padding: 9px 14px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); text-align: right; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .ls-table td:first-child { color: var(--text); text-align: left; }
+    .ls-table td.red { color: var(--red); }
+    .ls-table td.green { color: var(--green); }
+    @media (max-width: 860px) { .ls-layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <main class="tool-page">
+    <nav class="breadcrumb">
+      <a href="/">Home</a><span class="breadcrumb-sep">›</span>
+      <a href="/#cat-calculators">Calculators</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Loan Simulator</span>
+    </nav>
+    <header class="tool-header">
+      <div class="tool-header-inner">
+        <div class="tool-header-icon">🏦</div>
+        <div class="tool-header-text">
+          <div class="tool-category-tag">Calculator</div>
+          <h1 class="tool-title">Loan Simulator</h1>
+          <p class="tool-desc">Calculate your monthly payments, total interest cost and see the complete amortization schedule for any loan — mortgage, car loan or personal loan.</p>
+        </div>
+        <div class="tool-header-meta"><div class="tool-status-badge"><span class="tool-status-dot"></span> Live</div></div>
+      </div>
+    </header>
+    <div class="tool-body">
+      <div class="ls-layout">
+        <div class="nf-card">
+          <div class="nf-card-label">Loan Details</div>
+          <div class="ls-field"><label class="nf-label">Loan amount</label><div style="position:relative"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-family:var(--font-mono)">$</span><input type="number" id="lsAmount" class="nf-input" value="250000" style="padding-left:26px" /></div></div>
+          <div class="ls-field"><label class="nf-label">Annual interest rate</label><div style="position:relative"><input type="number" id="lsRate" class="nf-input" value="4.5" step="0.1" style="padding-right:28px" /><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-family:var(--font-mono)">%</span></div></div>
+          <div class="ls-field"><label class="nf-label">Duration (years)</label><input type="number" id="lsYears" class="nf-input" value="25" min="1" max="50" /></div>
+          <div class="ls-field"><label class="nf-label">Down payment (optional)</label><div style="position:relative"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-family:var(--font-mono)">$</span><input type="number" id="lsDown" class="nf-input" value="0" style="padding-left:26px" /></div></div>
+          <button class="nf-btn" id="lsCalc" style="width:100%">Calculate</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="nf-results-grid" id="lsResults" style="display:none">
+            <div class="nf-result-item"><div class="nf-result-item-label">Monthly payment</div><div class="nf-result-item-val green" id="lsMonthly">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Total repaid</div><div class="nf-result-item-val" id="lsTotal">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Total interest</div><div class="nf-result-item-val red" id="lsInterest">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Interest / Principal</div><div class="nf-result-item-val" id="lsRatio">—</div></div>
+          </div>
+          <div class="ls-table-wrap">
+            <table class="ls-table">
+              <thead><tr><th>Month</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead>
+              <tbody id="lsTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dimmer);padding:20px">Enter values and click Calculate</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer"></footer>
+  <script src="/components.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fmt = n => n.toLocaleString('en-US', { style:'currency', currency:'USD', maximumFractionDigits:2 });
+
+    document.getElementById('lsCalc').addEventListener('click', calculate);
+
+    function calculate() {
+      const total  = parseFloat(document.getElementById('lsAmount').value) || 0;
+      const down   = parseFloat(document.getElementById('lsDown').value) || 0;
+      const P      = total - down;
+      const annual = parseFloat(document.getElementById('lsRate').value) / 100 || 0;
+      const years  = parseInt(document.getElementById('lsYears').value) || 0;
+      const r      = annual / 12;
+      const n      = years * 12;
+
+      if (P <= 0 || r <= 0 || n <= 0) return;
+
+      const monthly = P * (r * Math.pow(1+r, n)) / (Math.pow(1+r, n) - 1);
+      const totalPaid = monthly * n;
+      const totalInt  = totalPaid - P;
+
+      document.getElementById('lsMonthly').textContent  = fmt(monthly);
+      document.getElementById('lsTotal').textContent    = fmt(totalPaid);
+      document.getElementById('lsInterest').textContent = fmt(totalInt);
+      document.getElementById('lsRatio').textContent    = ((totalInt / P) * 100).toFixed(1) + '%';
+      document.getElementById('lsResults').style.display = '';
+
+      const tbody = document.getElementById('lsTableBody');
+      tbody.innerHTML = '';
+      let balance = P;
+      for (let m = 1; m <= n; m++) {
+        const intPart  = balance * r;
+        const prinPart = monthly - intPart;
+        balance -= prinPart;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${m}</td><td>${fmt(monthly)}</td><td class="green">${fmt(prinPart)}</td><td class="red">${fmt(intPart)}</td><td>${fmt(Math.max(0, balance))}</td>`;
+        tbody.appendChild(tr);
+      }
+    }
+    calculate();
+  });
+  </script>
+</body>
+</html>
