@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free currency converter with live exchange rates. Convert between 170+ currencies including EUR, USD, GBP, JPY, BTC — updated in real time." />
+  <meta name="robots" content="index, follow" />
+  <title>Currency Converter — Live Exchange Rates | NovaFinance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .cc-main { display: flex; flex-direction: column; gap: 16px; }
+    .cc-converter {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px;
+    }
+    .cc-row { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 0; align-items: end; }
+    .cc-side { display: flex; flex-direction: column; gap: 8px; }
+    .cc-amount-wrap { position: relative; }
+    .cc-symbol {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      font-family: var(--font-mono); color: var(--text-dim); font-size: 0.9rem;
+    }
+    .cc-amount {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text); font-family: var(--font-mono); font-size: 1.4rem;
+      padding: 14px 14px 14px 36px; border-radius: var(--radius-sm); outline: none;
+      transition: border-color 0.2s;
+    }
+    .cc-amount:focus { border-color: var(--green); }
+    .cc-result-display {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      color: var(--green); font-family: var(--font-mono); font-size: 1.4rem;
+      padding: 14px; border-radius: var(--radius-sm);
+      display: flex; align-items: center;
+    }
+    .cc-swap-col { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
+    .cc-swap-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border2);
+      color: var(--text-dim); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s, border-color 0.2s, transform 0.3s;
+    }
+    .cc-swap-btn:hover { color: var(--green); border-color: var(--green); transform: rotate(180deg); }
+    .cc-rate-info {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0 0; font-size: 0.8rem; color: var(--text-dimmer);
+      font-family: var(--font-mono); flex-wrap: wrap; gap: 8px;
+    }
+    .cc-rate-val { color: var(--text-dim); }
+    .cc-updated { font-size: 0.7rem; }
+
+    /* Popular pairs */
+    .cc-pairs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+    .cc-pair-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .cc-pair-card:hover { border-color: rgba(0,212,170,0.3); }
+    .cc-pair-name { font-size: 0.72rem; font-weight: 700; color: var(--text-dimmer); margin-bottom: 4px; }
+    .cc-pair-rate { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text); }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <main class="tool-page">
+    <nav class="breadcrumb">
+      <a href="/">Home</a><span class="breadcrumb-sep">›</span>
+      <a href="/#cat-market">Market</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Currency Converter</span>
+    </nav>
+    <header class="tool-header">
+      <div class="tool-header-inner">
+        <div class="tool-header-icon">💱</div>
+        <div class="tool-header-text">
+          <div class="tool-category-tag">Market Tool</div>
+          <h1 class="tool-title">Currency Converter</h1>
+          <p class="tool-desc">Convert between 170+ currencies with live exchange rates. Rates updated every hour via open exchange rate API — free, no account needed.</p>
+        </div>
+        <div class="tool-header-meta"><div class="tool-status-badge"><span class="tool-status-dot"></span> Live rates</div></div>
+      </div>
+    </header>
+    <div class="tool-body">
+      <div class="cc-main">
+        <div class="cc-converter">
+          <div class="cc-row">
+            <div class="cc-side">
+              <label class="nf-label">Amount</label>
+              <div class="cc-amount-wrap">
+                <span class="cc-symbol" id="ccFromSymbol">$</span>
+                <input type="number" id="ccAmount" class="cc-amount" value="1000" />
+              </div>
+              <select id="ccFrom" class="nf-select" style="margin-top:8px"></select>
+            </div>
+            <div class="cc-swap-col">
+              <button class="cc-swap-btn" id="ccSwap" title="Swap currencies">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+              </button>
+            </div>
+            <div class="cc-side">
+              <label class="nf-label">Result</label>
+              <div class="cc-result-display" id="ccResult">—</div>
+              <select id="ccTo" class="nf-select" style="margin-top:8px"></select>
+            </div>
+          </div>
+          <div class="cc-rate-info">
+            <span class="cc-rate-val" id="ccRateInfo">Loading exchange rates…</span>
+            <span class="cc-updated" id="ccUpdated"></span>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="ccLoading" style="text-align:center;padding:20px;color:var(--text-dimmer);font-size:0.85rem">Loading live rates…</div>
+
+        <!-- Popular pairs -->
+        <div class="nf-card" id="ccPairsCard" style="display:none">
+          <div class="nf-card-label">Popular pairs (1 USD =)</div>
+          <div class="cc-pairs-grid" id="ccPairsGrid"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer"></footer>
+  <script src="/components.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    const POPULAR = ['EUR','GBP','JPY','CHF','CAD','AUD','CNY','INR','BRL','MXN','KRW','SGD'];
+    const SYMBOLS = { USD:'$', EUR:'€', GBP:'£', JPY:'¥', CHF:'Fr', CAD:'CA$', AUD:'A$', CNY:'¥', INR:'₹', BRL:'R$', KRW:'₩' };
+
+    let rates = {};
+    let base  = 'USD';
+
+    // Fetch rates
+    try {
+      const res  = await fetch('https://open.er-api.com/v6/latest/USD');
+      const data = await res.json();
+      rates = data.rates;
+      document.getElementById('ccLoading').style.display = 'none';
+      document.getElementById('ccUpdated').textContent = 'Updated: ' + new Date(data.time_last_update_unix * 1000).toLocaleTimeString();
+
+      populateSelects(data.rates);
+      renderPairs(data.rates);
+      convert();
+    } catch {
+      document.getElementById('ccLoading').textContent = 'Could not load live rates. Please try again.';
+    }
+
+    function populateSelects(rates) {
+      const currencies = Object.keys(rates).sort();
+      ['ccFrom','ccTo'].forEach((id, idx) => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = '';
+        currencies.forEach(code => {
+          const opt = document.createElement('option');
+          opt.value = code; opt.textContent = code;
+          if (idx === 0 && code === 'USD') opt.selected = true;
+          if (idx === 1 && code === 'EUR') opt.selected = true;
+          sel.appendChild(opt);
+        });
+      });
+    }
+
+    function convert() {
+      const amount = parseFloat(document.getElementById('ccAmount').value) || 0;
+      const from   = document.getElementById('ccFrom').value;
+      const to     = document.getElementById('ccTo').value;
+      if (!rates[from] || !rates[to]) return;
+
+      // Convert via USD base
+      const inUSD  = amount / rates[from];
+      const result = inUSD * rates[to];
+      const rate   = rates[to] / rates[from];
+
+      const fmt = n => n.toLocaleString('en-US', { maximumFractionDigits: 4 });
+      document.getElementById('ccResult').textContent = fmt(result) + ' ' + to;
+      document.getElementById('ccRateInfo').textContent = `1 ${from} = ${fmt(rate)} ${to}`;
+      document.getElementById('ccFromSymbol').textContent = SYMBOLS[from] || '';
+    }
+
+    function renderPairs(rates) {
+      const grid = document.getElementById('ccPairsGrid');
+      grid.innerHTML = '';
+      POPULAR.forEach(code => {
+        if (!rates[code]) return;
+        const card = document.createElement('div');
+        card.className = 'cc-pair-card';
+        card.innerHTML = `<div class="cc-pair-name">USD → ${code}</div><div class="cc-pair-rate">${rates[code].toFixed(4)}</div>`;
+        card.addEventListener('click', () => {
+          document.getElementById('ccFrom').value = 'USD';
+          document.getElementById('ccTo').value   = code;
+          convert();
+        });
+        grid.appendChild(card);
+      });
+      document.getElementById('ccPairsCard').style.display = '';
+    }
+
+    document.getElementById('ccAmount').addEventListener('input', convert);
+    document.getElementById('ccFrom').addEventListener('change', convert);
+    document.getElementById('ccTo').addEventListener('change', convert);
+    document.getElementById('ccSwap').addEventListener('click', () => {
+      const from = document.getElementById('ccFrom').value;
+      const to   = document.getElementById('ccTo').value;
+      document.getElementById('ccFrom').value = to;
+      document.getElementById('ccTo').value   = from;
+      convert();
+    });
+  });
+  </script>
+</body>
+</html>
