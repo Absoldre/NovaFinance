@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free inflation calculator. See how inflation erodes purchasing power over time and calculate the real value of money across any period." />
+  <meta name="robots" content="index, follow" />
+  <title>Inflation Calculator — Purchasing Power | NovaFinance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <main class="tool-page">
+    <nav class="breadcrumb"><a href="/">Home</a><span class="breadcrumb-sep">›</span><a href="/#cat-market">Market</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Inflation Calculator</span></nav>
+    <header class="tool-header">
+      <div class="tool-header-inner">
+        <div class="tool-header-icon">📉</div>
+        <div class="tool-header-text">
+          <div class="tool-category-tag">Market Tool</div>
+          <h1 class="tool-title">Inflation Calculator</h1>
+          <p class="tool-desc">Calculate how inflation erodes the purchasing power of money over time. Enter an amount, a time period and an inflation rate to see its real value today.</p>
+        </div>
+        <div class="tool-header-meta"><div class="tool-status-badge"><span class="tool-status-dot"></span> Live</div></div>
+      </div>
+    </header>
+    <div class="tool-body">
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:20px">
+        <div class="nf-card">
+          <div class="nf-card-label">Parameters</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><label class="nf-label">Initial amount ($)</label><input type="number" id="infAmount" class="nf-input" value="10000" /></div>
+            <div><label class="nf-label">Start year</label><input type="number" id="infStart" class="nf-input" value="2000" min="1900" max="2100" /></div>
+            <div><label class="nf-label">End year</label><input type="number" id="infEnd" class="nf-input" value="2024" min="1900" max="2100" /></div>
+            <div><label class="nf-label">Annual inflation rate (%)</label><input type="number" id="infRate" class="nf-input" value="3.1" step="0.1" /></div>
+            <button class="nf-btn" id="infCalc" style="width:100%">Calculate</button>
+            <div style="font-size:0.72rem;color:var(--text-dimmer);line-height:1.5">💡 US average inflation: ~3.1%/year. EU: ~2.5%/year. You can adjust the rate for any country.</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="nf-results-grid" id="infResults" style="display:none">
+            <div class="nf-result-item"><div class="nf-result-item-label">Value today</div><div class="nf-result-item-val red" id="infToday">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Purchasing power lost</div><div class="nf-result-item-val red" id="infLost">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Needed to match</div><div class="nf-result-item-val green" id="infNeeded">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Total inflation</div><div class="nf-result-item-val" id="infTotal">—</div></div>
+          </div>
+          <div class="nf-card">
+            <div class="nf-card-label">Purchasing power over time</div>
+            <canvas id="infGraph" style="width:100%;height:200px;display:block"></canvas>
+          </div>
+          <div class="nf-card" id="infContext" style="display:none">
+            <div class="nf-card-label">What does this mean?</div>
+            <p id="infExplain" style="font-size:0.88rem;color:var(--text-dim);line-height:1.7"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer"></footer>
+  <script src="/components.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fmt = n => n.toLocaleString('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 });
+    const fmtPct = n => n.toFixed(1) + '%';
+
+    document.getElementById('infCalc').addEventListener('click', calc);
+
+    function calc() {
+      const amount = parseFloat(document.getElementById('infAmount').value) || 0;
+      const start  = parseInt(document.getElementById('infStart').value) || 2000;
+      const end    = parseInt(document.getElementById('infEnd').value) || 2024;
+      const rate   = parseFloat(document.getElementById('infRate').value) / 100 || 0;
+      const years  = end - start;
+      if (years <= 0 || amount <= 0) return;
+
+      const factor     = Math.pow(1 + rate, years);
+      const todayValue = amount / factor;
+      const needed     = amount * factor;
+      const lost       = amount - todayValue;
+      const totalInf   = (factor - 1) * 100;
+
+      document.getElementById('infToday').textContent  = fmt(todayValue);
+      document.getElementById('infLost').textContent   = fmt(lost);
+      document.getElementById('infNeeded').textContent = fmt(needed);
+      document.getElementById('infTotal').textContent  = fmtPct(totalInf);
+      document.getElementById('infResults').style.display = '';
+
+      document.getElementById('infExplain').textContent =
+        `${fmt(amount)} in ${start} has the same purchasing power as ${fmt(needed)} in ${end}, ` +
+        `due to ${fmtPct(totalInf)} cumulative inflation over ${years} years. ` +
+        `Alternatively, ${fmt(amount)} in ${end} is only worth ${fmt(todayValue)} in ${start} dollars.`;
+      document.getElementById('infContext').style.display = '';
+
+      // Graph
+      const canvas = document.getElementById('infGraph');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const W = canvas.parentElement.clientWidth - 40, H = 200;
+      canvas.style.width = W+'px'; canvas.style.height = H+'px';
+      canvas.width = W*dpr; canvas.height = H*dpr; ctx.scale(dpr,dpr);
+      ctx.clearRect(0,0,W,H);
+
+      const points = [];
+      for (let y = 0; y <= years; y++) {
+        points.push({ x: y, val: amount / Math.pow(1+rate, y) });
+      }
+
+      const pad = { l:50, r:10, t:10, b:30 };
+      const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+      [0,0.25,0.5,0.75,1].forEach(f => {
+        const y = pad.t + f * gH;
+        ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+gW, y); ctx.stroke();
+        const v = amount * (1 - f);
+        ctx.fillStyle = 'rgba(122,154,181,0.5)'; ctx.font = '9px DM Mono'; ctx.textAlign = 'right';
+        ctx.fillText('$'+Math.round(v/1000)+'k', pad.l-4, y+3);
+      });
+
+      ctx.beginPath();
+      points.forEach((p,i) => {
+        const x = pad.l + (i/years)*gW;
+        const y = pad.t + gH - (p.val/amount)*gH;
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      const g = ctx.createLinearGradient(0,pad.t,0,pad.t+gH);
+      g.addColorStop(0,'rgba(255,77,109,0.3)'); g.addColorStop(1,'rgba(255,77,109,0.02)');
+      ctx.strokeStyle='var(--red)'; ctx.lineWidth=2.5; ctx.stroke();
+      ctx.lineTo(pad.l+gW,pad.t+gH); ctx.lineTo(pad.l,pad.t+gH); ctx.closePath();
+      ctx.fillStyle=g; ctx.fill();
+    }
+    calc();
+  });
+  </script>
+</body>
+</html>
