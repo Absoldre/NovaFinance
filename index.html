@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="NovaFinance — Free financial calculators and market tools. Compound interest, loan simulator, currency converter, budget planner and more. No account, no tracking." />
+  <meta name="keywords" content="compound interest calculator, loan simulator, currency converter, savings calculator, retirement calculator, VAT calculator, budget planner, inflation calculator, free financial tools" />
+  <meta name="robots" content="index, follow" />
+  <title>NovaFinance — Free Financial Calculators & Market Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 80px 24px 60px;
+      position: relative;
+    }
+    .hero-inner {
+      max-width: 1280px; margin: 0 auto; width: 100%;
+      display: grid; grid-template-columns: 1fr 420px;
+      gap: 60px; align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 5px 14px; border-radius: 100px;
+      background: var(--green-dim); border: 1px solid rgba(0,212,170,0.25);
+      font-size: 0.72rem; font-weight: 600; color: var(--green);
+      margin-bottom: 20px;
+    }
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s ease-in-out infinite; }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 5vw, 4.5rem);
+      line-height: 1.1; color: var(--text);
+      margin-bottom: 20px;
+    }
+    .hero-title em { font-style: italic; color: var(--green); }
+    .hero-title .gold { color: var(--gold); }
+    .hero-sub {
+      font-size: 1.05rem; color: var(--text-dim);
+      line-height: 1.7; max-width: 520px; margin-bottom: 36px;
+    }
+    .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 48px; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 28px;
+      background: linear-gradient(135deg, var(--green), var(--green-dark));
+      color: #000; font-weight: 700; font-size: 0.92rem;
+      border-radius: var(--radius-sm); border: none; cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 4px 24px rgba(0,212,170,0.3);
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 24px;
+      background: var(--surface); border: 1px solid var(--border2);
+      color: var(--text-dim); font-weight: 600; font-size: 0.92rem;
+      border-radius: var(--radius-sm); cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--green); }
+
+    .hero-stats { display: flex; gap: 32px; flex-wrap: wrap; }
+    .hero-stat { display: flex; flex-direction: column; gap: 4px; }
+    .hero-stat-n { font-family: var(--font-mono); font-size: 1.6rem; font-weight: 500; color: var(--green); }
+    .hero-stat-l { font-size: 0.75rem; color: var(--text-dimmer); }
+
+    /* Hero right — live calculator widget */
+    .hero-widget {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative; overflow: hidden;
+    }
+    .hero-widget::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--green), var(--gold));
+    }
+    .hw-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dimmer); margin-bottom: 16px; }
+    .hw-inputs { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .hw-row { display: flex; flex-direction: column; gap: 5px; }
+    .hw-label { font-size: 0.68rem; color: var(--text-dimmer); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .hw-input {
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font-mono); font-size: 0.95rem;
+      padding: 9px 12px; border-radius: var(--radius-sm); outline: none;
+      transition: border-color 0.2s;
+    }
+    .hw-input:focus { border-color: var(--green); }
+    .hw-result {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px;
+      margin-bottom: 12px;
+    }
+    .hw-result-val { font-family: var(--font-mono); font-size: 1.8rem; color: var(--green); font-weight: 500; }
+    .hw-result-label { font-size: 0.7rem; color: var(--text-dimmer); margin-top: 2px; }
+    .hw-cta {
+      display: block; width: 100%; padding: 10px;
+      background: var(--green-dim); border: 1px solid rgba(0,212,170,0.25);
+      color: var(--green); font-weight: 700; font-size: 0.82rem;
+      border-radius: var(--radius-sm); text-align: center; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .hw-cta:hover { background: rgba(0,212,170,0.2); }
+
+    /* ── Market snapshot ── */
+    .market-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 0;
+      overflow: hidden; position: relative; z-index: 1;
+    }
+    .market-bar-inner {
+      max-width: 1280px; margin: 0 auto; padding: 0 24px;
+      display: flex; gap: 0;
+    }
+    .market-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 24px; border-right: 1px solid var(--border);
+      flex: 1; min-width: 160px;
+    }
+    .market-item:last-child { border-right: none; }
+    .market-item-name { font-size: 0.72rem; font-weight: 700; color: var(--text-dimmer); text-transform: uppercase; letter-spacing: 0.06em; }
+    .market-item-val  { font-family: var(--font-mono); font-size: 1rem; color: var(--text); font-weight: 500; margin-top: 2px; }
+    .market-item-chg  { font-family: var(--font-mono); font-size: 0.75rem; margin-top: 1px; }
+    .market-item-chg.up   { color: var(--green); }
+    .market-item-chg.down { color: var(--red); }
+
+    /* ── Tools section ── */
+    .tools-section { padding: 80px 24px; position: relative; z-index: 1; }
+    .section-inner { max-width: 1280px; margin: 0 auto; }
+    .section-header { margin-bottom: 48px; }
+    .section-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--green); margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      color: var(--text); line-height: 1.2; margin-bottom: 12px;
+    }
+    .section-title em { font-style: italic; color: var(--gold); }
+    .section-sub { font-size: 0.95rem; color: var(--text-dim); max-width: 520px; }
+
+    /* Category */
+    .cat-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .cat-title {
+      font-family: var(--font-display); font-size: 1.3rem; color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .cat-count {
+      font-size: 0.7rem; font-weight: 700; color: var(--text-dimmer);
+      background: var(--surface2); border: 1px solid var(--border);
+      padding: 3px 10px; border-radius: 100px; font-family: var(--font-mono);
+    }
+    .tools-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px; margin-bottom: 56px;
+    }
+    .tool-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+      display: flex; flex-direction: column; gap: 10px;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      cursor: pointer; position: relative; overflow: hidden;
+      text-decoration: none; color: inherit;
+    }
+    .tool-card::before {
+      content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+      background: var(--green); opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .tool-card:hover { border-color: rgba(0,212,170,0.3); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .tool-card:hover::before { opacity: 1; }
+    .card-top { display: flex; align-items: center; justify-content: space-between; }
+    .card-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      background: var(--green-dim); border: 1px solid rgba(0,212,170,0.15);
+    }
+    .card-icon.gold { background: var(--gold-dim); border-color: rgba(245,200,66,0.15); }
+    .card-badge {
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 100px;
+      background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,212,170,0.25);
+    }
+    .card-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--text); }
+    .card-desc  { font-size: 0.8rem; color: var(--text-dim); line-height: 1.55; flex: 1; }
+    .card-tags  { display: flex; gap: 5px; flex-wrap: wrap; }
+    .card-tags span {
+      font-size: 0.62rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 100px;
+      background: var(--bg3); border: 1px solid var(--border); color: var(--text-dimmer);
+    }
+    .card-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--green), var(--green-dark));
+      color: #000; font-weight: 700; font-size: 0.78rem;
+      transition: opacity 0.2s;
+    }
+    .card-btn:hover { opacity: 0.88; }
+
+    /* ── Responsive ── */
+    @media (max-width: 960px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-widget { display: none; }
+      .market-bar-inner { flex-wrap: wrap; }
+      .market-item { flex: 1 1 45%; }
+    }
+    @media (max-width: 600px) {
+      .hero { padding: 100px 16px 60px; }
+      .market-item { flex: 1 1 100%; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-left">
+          <div class="hero-badge"><span class="hero-badge-dot"></span> 8 free financial tools</div>
+          <h1 class="hero-title">
+            Smart <em>financial</em><br/>
+            tools for <span class="gold">everyone</span>
+          </h1>
+          <p class="hero-sub">
+            Compound interest, loan simulators, currency conversion, retirement planning and more — all free, all instant, all in your browser. No account, no ads.
+          </p>
+          <div class="hero-btns">
+            <a href="#tools" class="btn-primary">
+              Explore Tools
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+            </a>
+            <a href="/tools/compound-interest/compound-interest.html" class="btn-ghost">Try Compound Interest</a>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat"><span class="hero-stat-n">8</span><span class="hero-stat-l">Tools</span></div>
+            <div class="hero-stat"><span class="hero-stat-n">100%</span><span class="hero-stat-l">Free</span></div>
+            <div class="hero-stat"><span class="hero-stat-n">0</span><span class="hero-stat-l">Sign-up</span></div>
+            <div class="hero-stat"><span class="hero-stat-n">Live</span><span class="hero-stat-l">Market data</span></div>
+          </div>
+        </div>
+
+        <!-- Mini compound interest widget -->
+        <div class="hero-widget">
+          <div class="hw-title">⚡ Quick Compound Interest</div>
+          <div class="hw-inputs">
+            <div class="hw-row">
+              <span class="hw-label">Initial amount ($)</span>
+              <input type="number" id="hwPrincipal" class="hw-input" value="10000" />
+            </div>
+            <div class="hw-row">
+              <span class="hw-label">Annual rate (%)</span>
+              <input type="number" id="hwRate" class="hw-input" value="7" step="0.1" />
+            </div>
+            <div class="hw-row">
+              <span class="hw-label">Years</span>
+              <input type="number" id="hwYears" class="hw-input" value="10" />
+            </div>
+          </div>
+          <div class="hw-result">
+            <div class="hw-result-val" id="hwResult">$19,671.51</div>
+            <div class="hw-result-label">Final value after 10 years</div>
+          </div>
+          <a href="/tools/compound-interest/compound-interest.html" class="hw-cta">Full calculator →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Market bar -->
+    <div class="market-bar">
+      <div class="market-bar-inner">
+        <div class="market-item">
+          <div>
+            <div class="market-item-name">EUR / USD</div>
+            <div class="market-item-val" id="mktEUR">—</div>
+            <div class="market-item-chg" id="mktEURchg">Live</div>
+          </div>
+        </div>
+        <div class="market-item">
+          <div>
+            <div class="market-item-name">Bitcoin</div>
+            <div class="market-item-val" id="mktBTC">—</div>
+            <div class="market-item-chg up">USD</div>
+          </div>
+        </div>
+        <div class="market-item">
+          <div>
+            <div class="market-item-name">Gold (oz)</div>
+            <div class="market-item-val" id="mktGold">—</div>
+            <div class="market-item-chg up">USD</div>
+          </div>
+        </div>
+        <div class="market-item">
+          <div>
+            <div class="market-item-name">Inflation (US)</div>
+            <div class="market-item-val">3.1%</div>
+            <div class="market-item-chg">Annual CPI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tools section -->
+    <section class="tools-section" id="tools">
+      <div class="section-inner">
+
+        <div class="section-header">
+          <div class="section-tag">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+            Free Tools
+          </div>
+          <h2 class="section-title">Everything you need<br/>to <em>understand your money</em></h2>
+          <p class="section-sub">All tools run directly in your browser. No server, no data collection, no account needed.</p>
+        </div>
+
+        <!-- Calculators -->
+        <div id="cat-calculators">
+          <div class="cat-header">
+            <div class="cat-title">📊 Calculators <span class="cat-count">4 tools</span></div>
+          </div>
+          <div class="tools-grid">
+
+            <a href="tools/compound-interest/compound-interest.html" class="tool-card">
+              <div class="card-top"><div class="card-icon">📈</div><div class="card-badge">Live</div></div>
+              <div class="card-title">Compound Interest</div>
+              <p class="card-desc">Calculate how your investments grow over time with compound interest. See year-by-year breakdown and interest earned.</p>
+              <div class="card-tags"><span>Investment</span><span>Growth</span></div>
+              <div class="card-btn">Launch <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+            </a>
+
+            <a href="tools/loan-simulator/loan-simulator.html" class="tool-card">
+              <div class="card-top"><div class="card-icon">🏦</div><div class="card-badge">Live</div></div>
+              <div class="card-title">Loan Simulator</div>
+              <p class="card-desc">Simulate any loan — mortgage, car, personal. See monthly payments, total interest and full amortization schedule.</p>
+              <div class="card-tags"><span>Loan</span><span>Mortgage</span></div>
+              <div class="card-btn">Launch <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+            </a>
+
+            <a href="tools/savings-calculator/savings-calculator.html" class="tool-card">
+              <div class="card-top"><div class="card-icon">🐖</div><div class="card-badge">Live</div></div>
+              <div class="card-title">Savings Calculator</div>
+              <p class="card-desc">Plan your savings goal. Add regular contributions and see exactly when you'll reach your target amount.</p>
+              <div class="card-tags"><span>Savings</span><span>Goal</span></div>
+              <div class="card-btn">Launch <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+            </a>
+
+            <a href="tools/retirement-simulator/retirement-simulator.html" class="tool-card">
+              <div class="card-top"><div class="card-icon gold">🏖️</div><div class="card-badge">Live</div></div>
+              <div class="card-title">Retirement Simulator</div>
+              <p class="card-desc">Estimate your retirement nest egg. Factor in current savings, contributions, returns and target retirement age.</p>
+              <div class="card-tags"><span>Retirement</span><span>Planning</span></div>
+              <div class="card-btn">Launch <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+            </a>
+
+          </div>
+        </div>
+
+        <!-- Market -->
+        <div id="cat-market">
+          <div class="cat-header">
+            <div class="cat-title">🌍 Market Tools <span class="cat-count">3 tools</span></div>
+          </div>
+          <div class="tools-grid">
+
+            <a href="tools/market-tracker/market-tracker.html" class="tool-card">
+              <div class="card-top"><div class="card-icon">📊</div><div class="card-badge">Live</div></div>
+              <div class="card-title">Market Tracker</div>
+              <p class="card-desc">Search any stock, ETF or crypto and get live price, chart and stats. AAPL, TSLA, BTC, ETH and 1000+ more — real-time, no account needed.</p>
+              <div class="card-tags"><span>Stocks</span><span>Crypto</span><span>Live</span></div>
+              <div class="card-btn">Launch <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+            </a>
+
+            <a href="tools/currency-converter/currency-converter.html" class="tool-card">
+              <div class="card-top"><div class="card-icon">💱</div><div class="card-badge">Live</div></div>
+              <div class="card-title">Currency Converter</div>
+              <p class="card-desc">Convert between 170+ currencies with live exchange rates. EUR, USD, GBP, JPY, BTC and more — updated in real time.</p>
+              <div class="card-tags"><span>Forex</span><span>Live rates</span></div>
+              <div class="card-btn">Launch <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+            </a>
+
+            <a href="tools/inflation-calculator/inflation-calculator.html" class="tool-card">
+              <div class="card-top"><div class="card-icon">📉</div><div class="card-badge">Live</div></div>
+              <div class="card-title">Inflation Calculator</div>
+              <p class="card-desc">See how inflation erodes purchasing power over time. Calculate the real value of money across any time period.</p>
+              <div class="card-tags"><span>CPI</span><span>Purchasing power</span></div>
+              <div class="card-btn">Launch <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+            </a>
+
+          </div>
+        </div>
+
+        <!-- Tax & Budget -->
+        <div id="cat-tax">
+          <div class="cat-header">
+            <div class="cat-title">💼 Tax & Budget <span class="cat-count">2 tools</span></div>
+          </div>
+          <div class="tools-grid">
+
+            <a href="tools/vat-calculator/vat-calculator.html" class="tool-card">
+              <div class="card-top"><div class="card-icon gold">🧾</div><div class="card-badge">Live</div></div>
+              <div class="card-title">VAT Calculator</div>
+              <p class="card-desc">Add or remove VAT from any price instantly. Supports all common VAT rates — great for invoicing and shopping.</p>
+              <div class="card-tags"><span>VAT</span><span>Tax</span></div>
+              <div class="card-btn">Launch <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+            </a>
+
+            <a href="tools/budget-planner/budget-planner.html" class="tool-card">
+              <div class="card-top"><div class="card-icon gold">📋</div><div class="card-badge">Live</div></div>
+              <div class="card-title">Budget Planner</div>
+              <p class="card-desc">Plan your monthly budget with income, fixed and variable expenses. See where your money goes and track your balance.</p>
+              <div class="card-tags"><span>Budget</span><span>Expenses</span></div>
+              <div class="card-btn">Launch <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+            </a>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script src="/components.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // ── Hero widget live calc ──
+    function calcHero() {
+      const p = parseFloat(document.getElementById('hwPrincipal').value) || 0;
+      const r = parseFloat(document.getElementById('hwRate').value) / 100 || 0;
+      const y = parseFloat(document.getElementById('hwYears').value) || 0;
+      const result = p * Math.pow(1 + r, y);
+      document.getElementById('hwResult').textContent =
+        result.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+    }
+    ['hwPrincipal','hwRate','hwYears'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', calcHero);
+    });
+    calcHero();
+
+    // ── Market bar live data ──
+    async function loadMarket() {
+      try {
+        const fxRes  = await fetch('https://open.er-api.com/v6/latest/USD');
+        const fxData = await fxRes.json();
+        if (fxData.rates?.EUR) {
+          document.getElementById('mktEUR').textContent = (1 / fxData.rates.EUR).toFixed(4);
+        }
+        const btcRes  = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,gold&vs_currencies=usd');
+        const btcData = await btcRes.json();
+        if (btcData.bitcoin?.usd) {
+          document.getElementById('mktBTC').textContent =
+            btcData.bitcoin.usd.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+        }
+        // Gold via metals API (free)
+        const goldRes  = await fetch('https://api.metals.live/v1/spot/gold');
+        const goldData = await goldRes.json();
+        if (goldData?.price) {
+          document.getElementById('mktGold').textContent =
+            goldData.price.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+        }
+      } catch { /* silently fail */ }
+    }
+    loadMarket();
+  });
+  </script>
+</body>
+</html>
