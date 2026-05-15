@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free retirement simulator. Estimate your retirement nest egg based on current savings, contributions, expected return and target retirement age." />
+  <meta name="robots" content="index, follow" />
+  <title>Retirement Simulator — NovaFinance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <main class="tool-page">
+    <nav class="breadcrumb"><a href="/">Home</a><span class="breadcrumb-sep">›</span><a href="/#cat-calculators">Calculators</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Retirement Simulator</span></nav>
+    <header class="tool-header">
+      <div class="tool-header-inner">
+        <div class="tool-header-icon gold">🏖️</div>
+        <div class="tool-header-text">
+          <div class="tool-category-tag gold">Calculator</div>
+          <h1 class="tool-title">Retirement Simulator</h1>
+          <p class="tool-desc">Estimate how much you'll have when you retire. Factor in your current savings, monthly contributions, expected investment return and retirement age.</p>
+        </div>
+        <div class="tool-header-meta"><div class="tool-status-badge"><span class="tool-status-dot"></span> Live</div></div>
+      </div>
+    </header>
+    <div class="tool-body">
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:20px">
+        <div class="nf-card">
+          <div class="nf-card-label">Your situation</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><label class="nf-label">Current age</label><input type="number" id="rtAge" class="nf-input" value="30" min="18" max="80" /></div>
+            <div><label class="nf-label">Retirement age</label><input type="number" id="rtRetire" class="nf-input" value="65" min="40" max="90" /></div>
+            <div><label class="nf-label">Current savings ($)</label><input type="number" id="rtSavings" class="nf-input" value="15000" /></div>
+            <div><label class="nf-label">Monthly contribution ($)</label><input type="number" id="rtMonthly" class="nf-input" value="800" /></div>
+            <div><label class="nf-label">Expected annual return (%)</label><input type="number" id="rtReturn" class="nf-input" value="7" step="0.1" /></div>
+            <div><label class="nf-label">Expected inflation (%)</label><input type="number" id="rtInflation" class="nf-input" value="3" step="0.1" /></div>
+            <button class="nf-btn" id="rtCalc" style="width:100%">Simulate</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="nf-results-grid" id="rtResults" style="display:none">
+            <div class="nf-result-item"><div class="nf-result-item-label">Nest egg at retirement</div><div class="nf-result-item-val green" id="rtNest">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">In today's dollars</div><div class="nf-result-item-val gold" id="rtReal">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Monthly income (4% rule)</div><div class="nf-result-item-val green" id="rtIncome">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Years to retire</div><div class="nf-result-item-val" id="rtYears">—</div></div>
+          </div>
+          <div class="nf-card">
+            <div class="nf-card-label">Projected retirement portfolio growth</div>
+            <canvas id="rtGraph" style="width:100%;height:220px;display:block"></canvas>
+          </div>
+          <div class="nf-card" id="rt4rule" style="display:none">
+            <div class="nf-card-label">The 4% Rule</div>
+            <p id="rt4text" style="font-size:0.88rem;color:var(--text-dim);line-height:1.7"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer"></footer>
+  <script src="/components.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fmt    = n => n.toLocaleString('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 });
+    document.getElementById('rtCalc').addEventListener('click', calc);
+
+    function calc() {
+      const age     = parseInt(document.getElementById('rtAge').value) || 30;
+      const retire  = parseInt(document.getElementById('rtRetire').value) || 65;
+      const savings = parseFloat(document.getElementById('rtSavings').value) || 0;
+      const monthly = parseFloat(document.getElementById('rtMonthly').value) || 0;
+      const ret     = parseFloat(document.getElementById('rtReturn').value) / 100 / 12 || 0;
+      const inf     = parseFloat(document.getElementById('rtInflation').value) / 100 || 0;
+      const years   = retire - age;
+      if (years <= 0) return;
+
+      let balance = savings;
+      const yearly = [];
+      for (let m = 1; m <= years * 12; m++) {
+        balance = balance * (1 + ret) + monthly;
+        if (m % 12 === 0) yearly.push(balance);
+      }
+
+      const nest   = balance;
+      const real   = nest / Math.pow(1 + inf, years);
+      const income = nest * 0.04 / 12;
+
+      document.getElementById('rtNest').textContent   = fmt(nest);
+      document.getElementById('rtReal').textContent   = fmt(real);
+      document.getElementById('rtIncome').textContent = fmt(income) + '/mo';
+      document.getElementById('rtYears').textContent  = years + ' years';
+      document.getElementById('rtResults').style.display = '';
+
+      document.getElementById('rt4text').textContent =
+        `Based on your ${fmt(nest)} nest egg, the 4% withdrawal rule suggests you can withdraw ` +
+        `${fmt(nest * 0.04)} per year (${fmt(income)}/month) without running out of money over a 30-year retirement.`;
+      document.getElementById('rt4rule').style.display = '';
+
+      // Graph
+      const canvas = document.getElementById('rtGraph');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const W = canvas.parentElement.clientWidth - 40, H = 220;
+      canvas.style.width = W+'px'; canvas.style.height = H+'px';
+      canvas.width = W*dpr; canvas.height = H*dpr; ctx.scale(dpr,dpr);
+      ctx.clearRect(0,0,W,H);
+
+      const max = Math.max(...yearly);
+      const pad = {l:60,r:10,t:10,b:30};
+      const gW = W-pad.l-pad.r, gH = H-pad.t-pad.b;
+
+      ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+      [0,0.25,0.5,0.75,1].forEach(f => {
+        const y = pad.t+f*gH;
+        ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+gW,y); ctx.stroke();
+        const v = max*(1-f);
+        ctx.fillStyle='rgba(122,154,181,0.5)'; ctx.font='9px DM Mono'; ctx.textAlign='right';
+        ctx.fillText(v>=1e6?'$'+(v/1e6).toFixed(1)+'M':'$'+Math.round(v/1000)+'k', pad.l-4, y+3);
+      });
+
+      ctx.beginPath();
+      yearly.forEach((v,i) => {
+        const x = pad.l+(i/(yearly.length-1))*gW;
+        const y = pad.t+gH-(v/max)*gH;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      const g = ctx.createLinearGradient(0,pad.t,0,pad.t+gH);
+      g.addColorStop(0,'rgba(245,200,66,0.35)'); g.addColorStop(1,'rgba(245,200,66,0.02)');
+      ctx.strokeStyle='var(--gold)'; ctx.lineWidth=2.5; ctx.stroke();
+      ctx.lineTo(pad.l+gW,pad.t+gH); ctx.lineTo(pad.l,pad.t+gH); ctx.closePath();
+      ctx.fillStyle=g; ctx.fill();
+    }
+    calc();
+  });
+  </script>
+</body>
+</html>
