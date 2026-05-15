@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free monthly budget planner. Track income and expenses, see where your money goes and plan your savings — no account needed." />
+  <meta name="robots" content="index, follow" />
+  <title>Budget Planner — Monthly Budget Tool | NovaFinance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .bp-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:14px}
+    .bp-section-title{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dimmer);margin-bottom:14px}
+    .bp-row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+    .bp-row input[type=text]{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:0.88rem;padding:9px 12px;border-radius:var(--radius-sm);outline:none}
+    .bp-row input[type=number]{width:130px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:0.88rem;padding:9px 12px;border-radius:var(--radius-sm);outline:none}
+    .bp-add-btn{padding:7px 14px;background:var(--green-dim);border:1px solid rgba(0,212,170,0.3);color:var(--green);font-weight:700;font-size:0.78rem;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap}
+    .bp-del-btn{width:28px;height:28px;background:var(--red-dim);border:1px solid rgba(255,77,109,0.3);color:var(--red);border-radius:6px;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bp-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+    .bp-sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+    .bp-sum-label{font-size:0.62rem;font-weight:700;color:var(--text-dimmer);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px}
+    .bp-sum-val{font-family:var(--font-mono);font-size:1.1rem;font-weight:500}
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <main class="tool-page">
+    <nav class="breadcrumb"><a href="/">Home</a><span class="breadcrumb-sep">›</span><a href="/#cat-tax">Tax and Budget</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Budget Planner</span></nav>
+    <header class="tool-header">
+      <div class="tool-header-inner">
+        <div class="tool-header-icon gold">📋</div>
+        <div class="tool-header-text">
+          <div class="tool-category-tag gold">Budget Tool</div>
+          <h1 class="tool-title">Budget Planner</h1>
+          <p class="tool-desc">Plan your monthly budget. Add your income sources and expenses, and see your balance, savings rate and spending breakdown instantly.</p>
+        </div>
+        <div class="tool-header-meta"><div class="tool-status-badge"><span class="tool-status-dot"></span> Live</div></div>
+      </div>
+    </header>
+    <div class="tool-body">
+      <!-- Summary -->
+      <div class="bp-summary" id="bpSummary">
+        <div class="bp-sum-card"><div class="bp-sum-label">Total Income</div><div class="bp-sum-val" style="color:var(--green)" id="bpTotalIncome">$0</div></div>
+        <div class="bp-sum-card"><div class="bp-sum-label">Total Expenses</div><div class="bp-sum-val" style="color:var(--red)" id="bpTotalExp">$0</div></div>
+        <div class="bp-sum-card"><div class="bp-sum-label">Balance</div><div class="bp-sum-val" id="bpBalance">$0</div></div>
+        <div class="bp-sum-card"><div class="bp-sum-label">Savings rate</div><div class="bp-sum-val" id="bpSavings">0%</div></div>
+      </div>
+
+      <!-- Income -->
+      <div class="bp-section">
+        <div class="bp-section-title">Income</div>
+        <div id="bpIncomeList"></div>
+        <div class="bp-row">
+          <input type="text" id="bpIncomeLabel" placeholder="Source (e.g. Salary)" />
+          <input type="number" id="bpIncomeAmount" placeholder="Amount" />
+          <button class="bp-add-btn" id="bpAddIncome">+ Add</button>
+        </div>
+      </div>
+
+      <!-- Expenses -->
+      <div class="bp-section">
+        <div class="bp-section-title">Expenses</div>
+        <div id="bpExpList"></div>
+        <div class="bp-row">
+          <input type="text" id="bpExpLabel" placeholder="Category (e.g. Rent)" />
+          <input type="number" id="bpExpAmount" placeholder="Amount" />
+          <button class="bp-add-btn" id="bpAddExp">+ Add</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer"></footer>
+  <script src="/components.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var income = [{label:'Salary', amount:3500}];
+    var expenses = [{label:'Rent', amount:1000},{label:'Food', amount:400},{label:'Transport', amount:150},{label:'Utilities', amount:100}];
+    var fmt = function(n) { return n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}); };
+
+    function render() {
+      var incList = document.getElementById('bpIncomeList');
+      var expList = document.getElementById('bpExpList');
+      incList.innerHTML = '';
+      expList.innerHTML = '';
+
+      income.forEach(function(item, i) {
+        var row = document.createElement('div'); row.className = 'bp-row';
+        row.innerHTML = '<input type="text" value="'+item.label+'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:0.88rem;padding:9px 12px;border-radius:var(--radius-sm);outline:none" />'
+          +'<input type="number" value="'+item.amount+'" style="width:130px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:0.88rem;padding:9px 12px;border-radius:var(--radius-sm);outline:none" />'
+          +'<button class="bp-del-btn">×</button>';
+        row.querySelectorAll('input')[0].addEventListener('input', function(e){income[i].label=e.target.value;update();});
+        row.querySelectorAll('input')[1].addEventListener('input', function(e){income[i].amount=parseFloat(e.target.value)||0;update();});
+        row.querySelector('.bp-del-btn').addEventListener('click', function(){income.splice(i,1);render();});
+        incList.appendChild(row);
+      });
+
+      expenses.forEach(function(item, i) {
+        var row = document.createElement('div'); row.className = 'bp-row';
+        row.innerHTML = '<input type="text" value="'+item.label+'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:0.88rem;padding:9px 12px;border-radius:var(--radius-sm);outline:none" />'
+          +'<input type="number" value="'+item.amount+'" style="width:130px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:0.88rem;padding:9px 12px;border-radius:var(--radius-sm);outline:none" />'
+          +'<button class="bp-del-btn">×</button>';
+        row.querySelectorAll('input')[0].addEventListener('input', function(e){expenses[i].label=e.target.value;update();});
+        row.querySelectorAll('input')[1].addEventListener('input', function(e){expenses[i].amount=parseFloat(e.target.value)||0;update();});
+        row.querySelector('.bp-del-btn').addEventListener('click', function(){expenses.splice(i,1);render();});
+        expList.appendChild(row);
+      });
+      update();
+    }
+
+    function update() {
+      var totalInc = income.reduce(function(s,i){return s+i.amount;},0);
+      var totalExp = expenses.reduce(function(s,e){return s+e.amount;},0);
+      var balance  = totalInc - totalExp;
+      var savRate  = totalInc > 0 ? ((balance/totalInc)*100).toFixed(1) : 0;
+      document.getElementById('bpTotalIncome').textContent = fmt(totalInc);
+      document.getElementById('bpTotalExp').textContent    = fmt(totalExp);
+      var balEl = document.getElementById('bpBalance');
+      balEl.textContent = fmt(balance);
+      balEl.style.color = balance >= 0 ? 'var(--green)' : 'var(--red)';
+      var savEl = document.getElementById('bpSavings');
+      savEl.textContent = savRate + '%';
+      savEl.style.color = balance >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+
+    document.getElementById('bpAddIncome').addEventListener('click', function() {
+      var label = document.getElementById('bpIncomeLabel').value.trim() || 'Income';
+      var amount = parseFloat(document.getElementById('bpIncomeAmount').value) || 0;
+      income.push({label:label,amount:amount});
+      document.getElementById('bpIncomeLabel').value = '';
+      document.getElementById('bpIncomeAmount').value = '';
+      render();
+    });
+    document.getElementById('bpAddExp').addEventListener('click', function() {
+      var label = document.getElementById('bpExpLabel').value.trim() || 'Expense';
+      var amount = parseFloat(document.getElementById('bpExpAmount').value) || 0;
+      expenses.push({label:label,amount:amount});
+      document.getElementById('bpExpLabel').value = '';
+      document.getElementById('bpExpAmount').value = '';
+      render();
+    });
+
+    render();
+  });
+  </script>
+</body>
+</html>
