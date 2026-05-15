@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free compound interest calculator. See how your investments grow over time with year-by-year breakdown — no account needed." />
+  <meta name="robots" content="index, follow" />
+  <title>Compound Interest Calculator — NovaFinance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .ci-layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+    .ci-inputs { display: flex; flex-direction: column; gap: 14px; }
+    .ci-field  { display: flex; flex-direction: column; gap: 6px; }
+    .ci-compound-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ci-compound-btn {
+      flex: 1; padding: 8px 10px; background: var(--bg3);
+      border: 1px solid var(--border); color: var(--text-dim);
+      font-size: 0.75rem; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer;
+      transition: all 0.2s; text-align: center;
+    }
+    .ci-compound-btn.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .ci-right { display: flex; flex-direction: column; gap: 16px; }
+    .ci-graph-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .ci-graph-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dimmer); margin-bottom: 14px; }
+    #ciGraph { width: 100%; height: 220px; display: block; }
+    .ci-table-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; max-height: 320px; overflow-y: auto;
+    }
+    .ci-table { width: 100%; border-collapse: collapse; }
+    .ci-table th {
+      background: var(--bg3); padding: 10px 14px;
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-dimmer); text-align: right; border-bottom: 1px solid var(--border);
+    }
+    .ci-table th:first-child { text-align: left; }
+    .ci-table td {
+      padding: 10px 14px; font-family: var(--font-mono); font-size: 0.8rem;
+      color: var(--text-dim); text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .ci-table td:first-child { text-align: left; color: var(--text); }
+    .ci-table td.green { color: var(--green); }
+    @media (max-width: 860px) { .ci-layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <main class="tool-page">
+    <nav class="breadcrumb">
+      <a href="/">Home</a><span class="breadcrumb-sep">›</span>
+      <a href="/#cat-calculators">Calculators</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Compound Interest</span>
+    </nav>
+    <header class="tool-header">
+      <div class="tool-header-inner">
+        <div class="tool-header-icon">📈</div>
+        <div class="tool-header-text">
+          <div class="tool-category-tag">Calculator</div>
+          <h1 class="tool-title">Compound Interest Calculator</h1>
+          <p class="tool-desc">Calculate how your investments grow with the power of compound interest. See the year-by-year breakdown, total interest earned and final value.</p>
+        </div>
+        <div class="tool-header-meta"><div class="tool-status-badge"><span class="tool-status-dot"></span> Live</div></div>
+      </div>
+    </header>
+    <div class="tool-body">
+      <div class="ci-layout">
+        <!-- Inputs -->
+        <div class="nf-card ci-inputs">
+          <div class="nf-card-label">Parameters</div>
+          <div class="ci-field"><label class="nf-label">Initial Investment</label><div style="position:relative"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-family:var(--font-mono)">$</span><input type="number" id="ciPrincipal" class="nf-input" value="10000" style="padding-left:26px" /></div></div>
+          <div class="ci-field"><label class="nf-label">Monthly Contribution</label><div style="position:relative"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-family:var(--font-mono)">$</span><input type="number" id="ciContrib" class="nf-input" value="200" style="padding-left:26px" /></div></div>
+          <div class="ci-field"><label class="nf-label">Annual Interest Rate</label><div style="position:relative"><input type="number" id="ciRate" class="nf-input" value="7" step="0.1" style="padding-right:28px" /><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-family:var(--font-mono)">%</span></div></div>
+          <div class="ci-field"><label class="nf-label">Duration (years)</label><input type="number" id="ciYears" class="nf-input" value="20" min="1" max="50" /></div>
+          <div class="ci-field">
+            <label class="nf-label">Compounding frequency</label>
+            <div class="ci-compound-group" id="ciFreqGroup">
+              <button class="ci-compound-btn" data-n="12">Monthly</button>
+              <button class="ci-compound-btn active" data-n="4">Quarterly</button>
+              <button class="ci-compound-btn" data-n="1">Yearly</button>
+            </div>
+          </div>
+          <button class="nf-btn" id="ciCalc" style="width:100%;margin-top:4px">Calculate</button>
+        </div>
+
+        <!-- Results -->
+        <div class="ci-right">
+          <div class="nf-results-grid" id="ciResultsGrid" style="display:none">
+            <div class="nf-result-item"><div class="nf-result-item-label">Final Value</div><div class="nf-result-item-val green" id="ciFinal">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Total Invested</div><div class="nf-result-item-val" id="ciInvested">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Total Interest</div><div class="nf-result-item-val gold" id="ciInterest">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Return on Investment</div><div class="nf-result-item-val green" id="ciROI">—</div></div>
+          </div>
+          <div class="ci-graph-wrap">
+            <div class="ci-graph-label">Growth over time</div>
+            <canvas id="ciGraph"></canvas>
+          </div>
+          <div class="ci-table-wrap">
+            <table class="ci-table">
+              <thead><tr><th>Year</th><th>Balance</th><th>Contributions</th><th>Interest earned</th></tr></thead>
+              <tbody id="ciTableBody"><tr><td colspan="4" style="text-align:center;color:var(--text-dimmer);padding:20px">Enter values and click Calculate</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer"></footer>
+  <script src="/components.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    let freq = 4;
+    document.getElementById('ciFreqGroup').querySelectorAll('.ci-compound-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.ci-compound-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active'); freq = parseInt(btn.dataset.n);
+      });
+    });
+
+    const fmt = n => n.toLocaleString('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 });
+    const fmtPct = n => n.toFixed(1) + '%';
+
+    document.getElementById('ciCalc').addEventListener('click', calculate);
+    ['ciPrincipal','ciContrib','ciRate','ciYears'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+    });
+
+    function calculate() {
+      const P = parseFloat(document.getElementById('ciPrincipal').value) || 0;
+      const c = parseFloat(document.getElementById('ciContrib').value) || 0;
+      const r = parseFloat(document.getElementById('ciRate').value) / 100 || 0;
+      const t = parseInt(document.getElementById('ciYears').value) || 0;
+      const n = freq;
+
+      const rows = [];
+      let balance = P;
+      let totalContrib = P;
+
+      for (let y = 1; y <= t; y++) {
+        const startBal = balance;
+        // Compound and add monthly contributions
+        for (let p = 0; p < n; p++) {
+          balance = balance * (1 + r/n);
+          // Add monthly contributions each month
+          const monthsPerPeriod = 12 / n;
+          balance += c * monthsPerPeriod;
+          totalContrib += c * monthsPerPeriod;
+        }
+        rows.push({ year: y, balance, contrib: totalContrib, interest: balance - totalContrib });
+      }
+
+      const final    = balance;
+      const invested = totalContrib;
+      const interest = final - invested;
+      const roi      = invested > 0 ? ((final - P) / P) * 100 : 0;
+
+      document.getElementById('ciFinal').textContent    = fmt(final);
+      document.getElementById('ciInvested').textContent = fmt(invested);
+      document.getElementById('ciInterest').textContent = fmt(interest);
+      document.getElementById('ciROI').textContent      = fmtPct(roi);
+      document.getElementById('ciResultsGrid').style.display = '';
+
+      // Table
+      const tbody = document.getElementById('ciTableBody');
+      tbody.innerHTML = '';
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>Year ${row.year}</td><td class="green">${fmt(row.balance)}</td><td>${fmt(row.contrib)}</td><td class="green">${fmt(row.interest)}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Graph
+      drawGraph(rows, P);
+    }
+
+    function drawGraph(rows, P) {
+      const canvas = document.getElementById('ciGraph');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const W = canvas.parentElement.clientWidth - 40;
+      const H = 220;
+      canvas.style.width  = W + 'px';
+      canvas.style.height = H + 'px';
+      canvas.width  = W * dpr;
+      canvas.height = H * dpr;
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, W, H);
+
+      const maxVal = Math.max(...rows.map(r => r.balance));
+      const pad = { l: 60, r: 20, t: 10, b: 30 };
+      const gW = W - pad.l - pad.r;
+      const gH = H - pad.t - pad.b;
+
+      // Grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.t + (i / 4) * gH;
+        ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
+        const val = maxVal * (1 - i/4);
+        ctx.fillStyle = 'rgba(122,154,181,0.6)'; ctx.font = '10px DM Mono, monospace'; ctx.textAlign = 'right';
+        ctx.fillText(val >= 1000 ? '$' + Math.round(val/1000) + 'k' : '$' + Math.round(val), pad.l - 6, y + 4);
+      }
+
+      // Contributions area
+      ctx.beginPath();
+      rows.forEach((r, i) => {
+        const x = pad.l + (i / (rows.length - 1)) * gW;
+        const y = pad.t + gH - (r.contrib / maxVal) * gH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.lineTo(pad.l + gW, pad.t + gH);
+      ctx.lineTo(pad.l, pad.t + gH);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(245,200,66,0.15)'; ctx.fill();
+
+      // Balance area
+      ctx.beginPath();
+      rows.forEach((r, i) => {
+        const x = pad.l + (i / (rows.length - 1)) * gW;
+        const y = pad.t + gH - (r.balance / maxVal) * gH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.lineTo(pad.l + gW, pad.t + gH);
+      ctx.lineTo(pad.l, pad.t + gH);
+      ctx.closePath();
+      const g = ctx.createLinearGradient(0, pad.t, 0, pad.t + gH);
+      g.addColorStop(0, 'rgba(0,212,170,0.3)'); g.addColorStop(1, 'rgba(0,212,170,0.02)');
+      ctx.fillStyle = g; ctx.fill();
+
+      // Balance line
+      ctx.beginPath(); ctx.lineWidth = 2.5; ctx.strokeStyle = 'var(--green)'; ctx.lineJoin = 'round';
+      rows.forEach((r, i) => {
+        const x = pad.l + (i / (rows.length - 1)) * gW;
+        const y = pad.t + gH - (r.balance / maxVal) * gH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Legend
+      ctx.font = '10px Inter, sans-serif'; ctx.textAlign = 'left';
+      ctx.fillStyle = '#00d4aa'; ctx.fillRect(pad.l, H - 18, 10, 10);
+      ctx.fillStyle = 'rgba(122,154,181,0.8)'; ctx.fillText('Total value', pad.l + 14, H - 10);
+      ctx.fillStyle = 'rgba(245,200,66,0.6)'; ctx.fillRect(pad.l + 90, H - 18, 10, 10);
+      ctx.fillStyle = 'rgba(122,154,181,0.8)'; ctx.fillText('Contributions', pad.l + 104, H - 10);
+    }
+
+    calculate();
+  });
+  </script>
+</body>
+</html>
