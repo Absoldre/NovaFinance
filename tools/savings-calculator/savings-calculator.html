@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free savings calculator. Plan your savings goal with regular contributions and see when you'll reach your target." />
+  <meta name="robots" content="index, follow" />
+  <title>Savings Calculator — NovaFinance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <main class="tool-page">
+    <nav class="breadcrumb"><a href="/">Home</a><span class="breadcrumb-sep">›</span><a href="/#cat-calculators">Calculators</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Savings Calculator</span></nav>
+    <header class="tool-header">
+      <div class="tool-header-inner">
+        <div class="tool-header-icon">🐖</div>
+        <div class="tool-header-text">
+          <div class="tool-category-tag">Calculator</div>
+          <h1 class="tool-title">Savings Calculator</h1>
+          <p class="tool-desc">Plan your savings goal. Enter your starting amount, monthly contributions and interest rate to see when you'll reach your target and how much you'll have.</p>
+        </div>
+        <div class="tool-header-meta"><div class="tool-status-badge"><span class="tool-status-dot"></span> Live</div></div>
+      </div>
+    </header>
+    <div class="tool-body">
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:20px">
+        <div class="nf-card">
+          <div class="nf-card-label">Parameters</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><label class="nf-label">Current savings ($)</label><input type="number" id="svStart" class="nf-input" value="5000" /></div>
+            <div><label class="nf-label">Monthly contribution ($)</label><input type="number" id="svMonthly" class="nf-input" value="500" /></div>
+            <div><label class="nf-label">Annual interest rate (%)</label><input type="number" id="svRate" class="nf-input" value="4" step="0.1" /></div>
+            <div><label class="nf-label">Savings goal ($) — optional</label><input type="number" id="svGoal" class="nf-input" value="100000" /></div>
+            <div><label class="nf-label">Time horizon (years)</label><input type="number" id="svYears" class="nf-input" value="10" /></div>
+            <button class="nf-btn" id="svCalc" style="width:100%">Calculate</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="nf-results-grid" id="svResults" style="display:none">
+            <div class="nf-result-item"><div class="nf-result-item-label">Final balance</div><div class="nf-result-item-val green" id="svFinal">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Total contributed</div><div class="nf-result-item-val" id="svContrib">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Interest earned</div><div class="nf-result-item-val gold" id="svInterest">—</div></div>
+            <div class="nf-result-item"><div class="nf-result-item-label">Goal reached in</div><div class="nf-result-item-val green" id="svGoalTime">—</div></div>
+          </div>
+          <div class="nf-card">
+            <div class="nf-card-label">Year-by-year balance</div>
+            <canvas id="svGraph" style="width:100%;height:200px;display:block"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer"></footer>
+  <script src="/components.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fmt = n => n.toLocaleString('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 });
+
+    document.getElementById('svCalc').addEventListener('click', calc);
+
+    function calc() {
+      const P = parseFloat(document.getElementById('svStart').value) || 0;
+      const c = parseFloat(document.getElementById('svMonthly').value) || 0;
+      const r = parseFloat(document.getElementById('svRate').value) / 100 / 12 || 0;
+      const y = parseInt(document.getElementById('svYears').value) || 10;
+      const goal = parseFloat(document.getElementById('svGoal').value) || 0;
+
+      let balance = P, totalC = P, goalMonth = null;
+      const yearly = [];
+
+      for (let m = 1; m <= y * 12; m++) {
+        balance = balance * (1 + r) + c;
+        totalC += c;
+        if (goal > 0 && !goalMonth && balance >= goal) goalMonth = m;
+        if (m % 12 === 0) yearly.push(balance);
+      }
+
+      document.getElementById('svFinal').textContent    = fmt(balance);
+      document.getElementById('svContrib').textContent  = fmt(totalC);
+      document.getElementById('svInterest').textContent = fmt(balance - totalC);
+      document.getElementById('svGoalTime').textContent = goalMonth
+        ? `${Math.floor(goalMonth/12)}y ${goalMonth%12}m`
+        : goal > 0 ? 'Not reached' : '—';
+      document.getElementById('svResults').style.display = '';
+      drawBar(yearly);
+    }
+
+    function drawBar(data) {
+      const canvas = document.getElementById('svGraph');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const W = canvas.parentElement.clientWidth - 40, H = 200;
+      canvas.style.width = W+'px'; canvas.style.height = H+'px';
+      canvas.width = W*dpr; canvas.height = H*dpr; ctx.scale(dpr,dpr);
+      ctx.clearRect(0,0,W,H);
+      const max = Math.max(...data);
+      const bw = (W - 20) / data.length - 4;
+      data.forEach((v,i) => {
+        const h = (v/max) * (H-30);
+        const x = 10 + i * ((W-20)/data.length);
+        const g = ctx.createLinearGradient(0, H-30-h, 0, H-30);
+        g.addColorStop(0, 'rgba(0,212,170,0.8)'); g.addColorStop(1, 'rgba(0,212,170,0.2)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.roundRect(x, H-30-h, bw, h, [3,3,0,0]); ctx.fill();
+        if (i % Math.ceil(data.length/5) === 0) {
+          ctx.fillStyle = 'rgba(122,154,181,0.6)'; ctx.font = '9px Inter'; ctx.textAlign = 'center';
+          ctx.fillText('Y'+(i+1), x+bw/2, H-14);
+        }
+      });
+    }
+
+    calc();
+  });
+  </script>
+</body>
+</html>
