@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free VAT calculator. Add or remove VAT from any price instantly. Supports all common VAT rates worldwide." />
+  <meta name="robots" content="index, follow" />
+  <title>VAT Calculator — Add or Remove Tax | NovaFinance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .vat-mode-group{display:flex;gap:6px;margin-bottom:16px}
+    .vat-mode-btn{flex:1;padding:10px;background:var(--bg3);border:1px solid var(--border);color:var(--text-dim);font-weight:600;font-size:0.82rem;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s;text-align:center}
+    .vat-mode-btn.active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+    .vat-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+    .vat-preset{padding:5px 12px;background:var(--bg3);border:1px solid var(--border);color:var(--text-dim);font-size:0.75rem;font-weight:600;border-radius:100px;cursor:pointer;transition:all 0.2s}
+    .vat-preset:hover{border-color:var(--green);color:var(--green)}
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <main class="tool-page">
+    <nav class="breadcrumb"><a href="/">Home</a><span class="breadcrumb-sep">›</span><a href="/#cat-tax">Tax and Budget</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">VAT Calculator</span></nav>
+    <header class="tool-header">
+      <div class="tool-header-inner">
+        <div class="tool-header-icon gold">🧾</div>
+        <div class="tool-header-text">
+          <div class="tool-category-tag gold">Tax Tool</div>
+          <h1 class="tool-title">VAT Calculator</h1>
+          <p class="tool-desc">Add or remove VAT from any price instantly. Choose from common VAT rates or enter a custom rate. Ideal for invoicing, shopping and accounting.</p>
+        </div>
+        <div class="tool-header-meta"><div class="tool-status-badge"><span class="tool-status-dot"></span> Live</div></div>
+      </div>
+    </header>
+    <div class="tool-body">
+      <div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+        <div class="nf-card">
+          <div class="vat-mode-group">
+            <button class="vat-mode-btn active" id="vatModeAdd">Add VAT</button>
+            <button class="vat-mode-btn" id="vatModeRem">Remove VAT</button>
+          </div>
+          <div style="margin-bottom:12px"><label class="nf-label">Amount</label><input type="number" id="vatAmount" class="nf-input" value="100" step="0.01" /></div>
+          <div style="margin-bottom:12px"><label class="nf-label">VAT Rate (%)</label><input type="number" id="vatRate" class="nf-input" value="20" step="0.1" /></div>
+          <div class="vat-presets">
+            <button class="vat-preset" data-rate="5">5%</button>
+            <button class="vat-preset" data-rate="7">7%</button>
+            <button class="vat-preset" data-rate="10">10%</button>
+            <button class="vat-preset" data-rate="19">19% DE</button>
+            <button class="vat-preset" data-rate="20">20% FR/UK</button>
+            <button class="vat-preset" data-rate="21">21% ES</button>
+            <button class="vat-preset" data-rate="22">22% IT</button>
+            <button class="vat-preset" data-rate="25">25% SE</button>
+          </div>
+        </div>
+        <div class="nf-result-card" id="vatResult" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">
+            <div><div style="font-size:0.65rem;font-weight:700;color:var(--text-dimmer);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">Pre-tax</div><div style="font-family:var(--font-mono);font-size:1.4rem;color:var(--green)" id="vatPre">--</div></div>
+            <div><div style="font-size:0.65rem;font-weight:700;color:var(--text-dimmer);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">VAT amount</div><div style="font-family:var(--font-mono);font-size:1.4rem;color:var(--gold)" id="vatTax">--</div></div>
+            <div><div style="font-size:0.65rem;font-weight:700;color:var(--text-dimmer);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">Total inc. VAT</div><div style="font-family:var(--font-mono);font-size:1.4rem;color:var(--green)" id="vatPost">--</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer"></footer>
+  <script src="/components.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var mode = 'add';
+    function fmt(n) { return n.toLocaleString('en-US', {style:'currency',currency:'USD',maximumFractionDigits:2}); }
+    document.getElementById('vatModeAdd').addEventListener('click', function() { mode='add'; document.getElementById('vatModeAdd').classList.add('active'); document.getElementById('vatModeRem').classList.remove('active'); calc(); });
+    document.getElementById('vatModeRem').addEventListener('click', function() { mode='rem'; document.getElementById('vatModeRem').classList.add('active'); document.getElementById('vatModeAdd').classList.remove('active'); calc(); });
+    document.getElementById('vatAmount').addEventListener('input', calc);
+    document.getElementById('vatRate').addEventListener('input', calc);
+    document.querySelectorAll('.vat-preset').forEach(function(btn) {
+      btn.addEventListener('click', function() { document.getElementById('vatRate').value = btn.dataset.rate; calc(); });
+    });
+    function calc() {
+      var amount = parseFloat(document.getElementById('vatAmount').value) || 0;
+      var rate   = parseFloat(document.getElementById('vatRate').value) / 100 || 0;
+      var pre, tax, post;
+      if (mode === 'add') { pre = amount; tax = amount * rate; post = amount + tax; }
+      else { post = amount; pre = amount / (1 + rate); tax = post - pre; }
+      document.getElementById('vatPre').textContent  = fmt(pre);
+      document.getElementById('vatTax').textContent  = fmt(tax);
+      document.getElementById('vatPost').textContent = fmt(post);
+      document.getElementById('vatResult').style.display = '';
+    }
+    calc();
+  });
+  </script>
+</body>
+</html>
